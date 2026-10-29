@@ -1,4 +1,5 @@
 import process from 'node:process';
+import {webFrame} from 'electron';
 import {ipcRenderer as ipc} from 'electron-better-ipc';
 import {is} from 'electron-util';
 import elementReady from 'element-ready';
@@ -7,6 +8,58 @@ import selectors from './browser/selectors';
 import {toggleVideoAutoplay} from './autoplay';
 import {sendConversationList} from './browser/conversation-list';
 import {IToggleSounds} from './types';
+
+// Optimize WebRTC microphone gain to prevent audio volume attenuation during calls
+try {
+	webFrame.executeJavaScript(`
+		(() => {
+			if (window.__caprineWebRtcPatched) return;
+			window.__caprineWebRtcPatched = true;
+
+			if (navigator?.mediaDevices?.getUserMedia) {
+				const orig = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+				navigator.mediaDevices.getUserMedia = async function(c) {
+					if (c && c.audio) {
+						if (typeof c.audio === 'object') {
+							c.audio.autoGainControl = false;
+							c.audio.googAutoGainControl = false;
+							c.audio.googAutoGainControl2 = false;
+							if (c.audio.echoCancellation === undefined) c.audio.echoCancellation = true;
+							if (c.audio.noiseSuppression === undefined) c.audio.noiseSuppression = true;
+						} else if (c.audio === true) {
+							c.audio = {
+								autoGainControl: false,
+								googAutoGainControl: false,
+								googAutoGainControl2: false,
+								echoCancellation: true,
+								noiseSuppression: true,
+							};
+						}
+					}
+					try {
+						return await orig(c);
+					} catch (e) {
+						return orig(c);
+					}
+				};
+			}
+
+			if (window.MediaStreamTrack && MediaStreamTrack.prototype.applyConstraints) {
+				const origApplyConstraints = MediaStreamTrack.prototype.applyConstraints;
+				MediaStreamTrack.prototype.applyConstraints = function(constraints) {
+					if (this.kind === 'audio' && constraints && typeof constraints === 'object') {
+						constraints.autoGainControl = false;
+						constraints.googAutoGainControl = false;
+						constraints.googAutoGainControl2 = false;
+					}
+					return origApplyConstraints.call(this, constraints);
+				};
+			}
+		})();
+	`);
+} catch (error) {
+	console.warn('Early WebRTC patch error:', error);
+}
 
 async function withMenu(
 	menuButtonElement: HTMLElement,

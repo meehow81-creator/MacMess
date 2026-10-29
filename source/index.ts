@@ -38,9 +38,11 @@ import {caprineIconPath} from './constants';
 
 ipc.setMaxListeners(100);
 
-// Hardware acceleration & WebRTC optimizations for Apple Silicon
+// Hardware acceleration & WebRTC audio/video optimizations for Apple Silicon
 if (is.macos) {
 	app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,WebRtcHideLocalIpsWithMdns');
+	// Prevent WebRTC from aggressively damping or lowering macOS microphone input volume
+	app.commandLine.appendSwitch('disable-features', 'WebRtcAllowInputVolumeModification');
 }
 
 electronDebug({

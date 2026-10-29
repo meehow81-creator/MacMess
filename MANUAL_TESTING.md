@@ -39,12 +39,13 @@ Poniższa instrukcja pozwala na pełne przetestowanie aplikacji **Caprine Enhanc
 
 ---
 
-## 5. Połączenia głosowe (Audio WebRTC)
+## 5. Połączenia głosowe (Audio WebRTC i głośność mikrofonu)
 1. Otwórz konwersację z użytkownikiem i kliknij ikonę słuchawki („Rozpocznij połączenie głosowe”).
 2. **Oczekiwany rezultat:**
    - Przy pierwszym uruchomieniu macOS wyświetli natywny monit TCC z prośbą o dostęp do mikrofonu (`NSMicrophoneUsageDescription`).
    - Po zaakceptowaniu okno połączenia otwiera się wewnątrz Caprine Enhanced (zamiast w zewnętrznej przeglądarce).
    - Dźwięk jest rejestrowany i przesyłany do rozmówcy.
+   - **Weryfikacja braku tłumienia mikrofonu (WebRTC AGC Fix):** W trakcie rozmowy trwającej powyżej 1-2 minut poziom głośności Twojego głosu u rozmówcy pozostaje stały i wyraźny. Suwak czułości mikrofonu w *Ustawienia systemowe > Dźwięk > Wejście* nie przesuwa się samoczynnie w dół (zabezpieczone flagą `--disable-features=WebRtcAllowInputVolumeModification` oraz wymuszeniem `autoGainControl: false` w Audio Constraints).
 
 ---
 
@@ -53,6 +54,7 @@ Poniższa instrukcja pozwala na pełne przetestowanie aplikacji **Caprine Enhanc
 2. **Oczekiwany rezultat:**
    - macOS wyświetli systemowy monit o dostęp do kamery (`NSCameraUsageDescription`).
    - Obraz z wbudowanej kamery FaceTime HD / kamery zewnętrznej pojawia się w oknie rozmowy.
+   - Mikrofon przekazuje dźwięk o stałej czułości bez samoczynnego wyciszania w tle.
 3. W menu aplikacji wybierz: `Caprine Enhanced` -> `Check Camera & Microphone Permissions…`.
 4. **Oczekiwany rezultat:** Wyświetla się okno z potwierdzeniem `CAMERA: GRANTED`, `MICROPHONE: GRANTED`.
 

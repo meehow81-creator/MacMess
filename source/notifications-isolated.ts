@@ -90,4 +90,54 @@
 	try {
 		(window as any).Notification = augmentedNotification;
 	} catch {}
+
+	// Optimize WebRTC microphone gain to prevent audio volume attenuation during calls
+	try {
+		if (navigator?.mediaDevices?.getUserMedia) {
+			const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+			navigator.mediaDevices.getUserMedia = async function (constraints: MediaStreamConstraints) {
+				if (constraints && constraints.audio) {
+					if (typeof constraints.audio === 'object') {
+						constraints.audio.autoGainControl = false;
+						(constraints.audio as any).googAutoGainControl = false;
+						(constraints.audio as any).googAutoGainControl2 = false;
+						if (constraints.audio.echoCancellation === undefined) {
+							constraints.audio.echoCancellation = true;
+						}
+						if (constraints.audio.noiseSuppression === undefined) {
+							constraints.audio.noiseSuppression = true;
+						}
+					} else if (constraints.audio === true) {
+						constraints.audio = {
+							autoGainControl: false,
+							googAutoGainControl: false,
+							googAutoGainControl2: false,
+							echoCancellation: true,
+							noiseSuppression: true,
+						} as any;
+					}
+				}
+
+				try {
+					return await originalGetUserMedia(constraints);
+				} catch {
+					return originalGetUserMedia(constraints);
+				}
+			};
+		}
+
+		if (window.MediaStreamTrack && MediaStreamTrack.prototype.applyConstraints) {
+			const originalApplyConstraints = MediaStreamTrack.prototype.applyConstraints;
+			MediaStreamTrack.prototype.applyConstraints = function (constraints?: MediaTrackConstraints) {
+				if (this.kind === 'audio' && constraints && typeof constraints === 'object') {
+					constraints.autoGainControl = false;
+					(constraints as any).googAutoGainControl = false;
+					(constraints as any).googAutoGainControl2 = false;
+				}
+				return originalApplyConstraints.call(this, constraints);
+			};
+		}
+	} catch (error) {
+		console.warn('WebRTC audio enhancement error:', error);
+	}
 })(window, Notification);

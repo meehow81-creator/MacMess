@@ -228,6 +228,22 @@ test('Internal navigation preserves login, checkpoints, and auth while routing e
 	assert.equal(isInternalNavigation('https://youtube.com/watch?v=123'), false);
 });
 
+// 8. Test WebRTC AGC volume protection configuration
+test('WebRTC AGC prevention switch and audio constraints prevent microphone attenuation', () => {
+	const indexCode = fs.readFileSync(path.join(rootDir, 'source', 'index.ts'), 'utf8');
+	assert.ok(
+		indexCode.includes("app.commandLine.appendSwitch('disable-features', 'WebRtcAllowInputVolumeModification')"),
+		'WebRtcAllowInputVolumeModification disable switch missing from index.ts'
+	);
+
+	const notifCode = fs.readFileSync(path.join(rootDir, 'source', 'notifications-isolated.ts'), 'utf8');
+	assert.ok(notifCode.includes('autoGainControl = false'), 'autoGainControl disabled in notifications-isolated missing');
+	assert.ok(notifCode.includes('googAutoGainControl'), 'googAutoGainControl disabled in notifications-isolated missing');
+
+	const callCode = fs.readFileSync(path.join(rootDir, 'source', 'browser-call.ts'), 'utf8');
+	assert.ok(callCode.includes('autoGainControl = false'), 'autoGainControl disabled in browser-call missing');
+});
+
 console.log(`\n========================================`);
 console.log(`Results: ${passedTests}/${totalTests} tests passed.`);
 console.log(`========================================\n`);
