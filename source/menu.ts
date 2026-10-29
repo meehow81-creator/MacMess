@@ -808,6 +808,13 @@ ${debugInfo()}`;
 				},
 			},
 			{
+				label: 'Accept Cookies',
+				accelerator: 'CommandOrControl+Shift+C',
+				click() {
+					sendAction('accept-cookies');
+				},
+			},
+			{
 				type: 'separator',
 			},
 			...switchItems,

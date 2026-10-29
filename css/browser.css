@@ -74,26 +74,71 @@ body {
 	display: none !important;
 }
 
-/* Cookies notification: Adjust size for smaller windows */
-._9o-g {
-	height: 290px !important;
-}
-._9xo5 {
-	padding-top: 12px !important;
-}
+/* Cookies notification dialog: Ensure responsive height, scrolling, and visible action buttons */
 ._59s7._9l2g {
-	height: 498px !important;
+	height: auto !important;
+	max-height: 90vh !important;
+	overflow-y: auto !important;
+	position: relative !important;
+	display: flex !important;
+	flex-direction: column !important;
 }
 
-/* Cookies notification: Remove "allow all cookies" button */
-._42ft._4jy0._9xo7._4jy3._4jy1.selected._51sy {
-	display: none;
+._9o-g {
+	height: auto !important;
+	max-height: 65vh !important;
+	overflow-y: auto !important;
 }
 
-/* Cookies notification: accept button */
-._42ft._4jy0._9xo6._4jy3._4jy1.selected._51sy {
+/* Ensure cookie consent action buttons (both Accept and Decline) are always fully visible and clickable */
+[data-cookiebanner="accept_button"],
+[data-cookiebanner="accept_only_essential_button"],
+._42ft._4jy0._alf6,
+._42ft._4jy0._alf7,
+._42ft._4jy0._9xo6,
+._42ft._4jy0._9xo7 {
+	display: inline-flex !important;
+	visibility: visible !important;
+	opacity: 1 !important;
+	cursor: pointer !important;
+	z-index: 9999 !important;
+	margin: 6px 8px !important;
+	padding: 8px 16px !important;
+	border-radius: 6px !important;
+}
+
+/* Make primary action button ("Allow all cookies") clear and prominent */
+[data-cookiebanner="accept_button"],
+._42ft._4jy0._alf6,
+._42ft._4jy0._9xo6 {
 	background-color: #1877f2 !important;
-	color: var(--white) !important;
+	color: #ffffff !important;
+}
+
+/* Make secondary action button ("Decline optional") distinct and readable */
+[data-cookiebanner="accept_only_essential_button"],
+._42ft._4jy0._alf7,
+._42ft._4jy0._9xo7 {
+	background-color: #e4e6eb !important;
+	color: #050505 !important;
+}
+
+html.dark-mode [data-cookiebanner="accept_only_essential_button"],
+html.dark-mode ._42ft._4jy0._alf7,
+html.dark-mode ._42ft._4jy0._9xo7 {
+	background-color: #3a3b3c !important;
+	color: #e4e6eb !important;
+}
+
+/* Pin cookie button actions to bottom of dialog so they never scroll out of view */
+._59s7._9l2g ._9xo5,
+._59s7._9l2g > div:last-child {
+	position: sticky !important;
+	bottom: 0 !important;
+	background: inherit !important;
+	z-index: 1000 !important;
+	padding: 12px 16px !important;
+	box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Hide disabled scrollbar on the right side */

@@ -798,8 +798,69 @@ document.addEventListener('DOMContentLoaded', async () => {
 	// Hook auto-scroll observer
 	observeAutoscroll();
 
+	// Assist with cookie consent dialog visibility
+	initCookieConsentAssistant();
+
 	// Hook broken dark mode observer
 	observeThemeBugs();
+});
+
+function initCookieConsentAssistant(): void {
+	const cookieButtonSelectors = [
+		'[data-cookiebanner="accept_button"]',
+		'[data-cookiebanner="accept_only_essential_button"]',
+		'button[data-testid*="cookie-policy-manage-dialog-accept-button"]',
+		'._42ft._4jy0._alf6',
+		'._42ft._4jy0._alf7',
+		'._42ft._4jy0._9xo6',
+		'._42ft._4jy0._9xo7',
+	];
+
+	const makeButtonsVisibleAndAccessible = (): void => {
+		const dialog = document.querySelector<HTMLElement>('._59s7._9l2g, [role="dialog"]:has([data-cookiebanner]), ._9o-w');
+		if (!dialog) {
+			return;
+		}
+
+		// Ensure dialog container does not clamp buttons or hide overflow
+		dialog.style.maxHeight = '90vh';
+		dialog.style.overflowY = 'auto';
+
+		for (const selector of cookieButtonSelectors) {
+			const button = document.querySelector<HTMLElement>(selector);
+			if (button) {
+				button.style.display = 'inline-flex';
+				button.style.visibility = 'visible';
+				button.style.opacity = '1';
+				button.style.cursor = 'pointer';
+			}
+		}
+	};
+
+	makeButtonsVisibleAndAccessible();
+
+	const observer = new MutationObserver(() => {
+		makeButtonsVisibleAndAccessible();
+	});
+
+	observer.observe(document.documentElement, {
+		childList: true,
+		subtree: true,
+	});
+
+	// Disconnect after 20 seconds to conserve CPU
+	setTimeout(() => {
+		observer.disconnect();
+	}, 20000);
+}
+
+ipc.answerMain('accept-cookies', () => {
+	const acceptButton = document.querySelector<HTMLElement>(
+		'[data-cookiebanner="accept_button"], [data-cookiebanner="accept_only_essential_button"], ._42ft._4jy0._alf6, ._42ft._4jy0._alf7',
+	);
+	if (acceptButton) {
+		acceptButton.click();
+	}
 });
 
 // Handle title bar double-click.
