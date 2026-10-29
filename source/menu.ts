@@ -755,7 +755,7 @@ ${debugInfo()}`;
 	const macosTemplate: MenuItemConstructorOptions[] = [
 		appMenu([
 			{
-				label: 'Caprine Preferences',
+				label: 'Caprine Enhanced Preferences',
 				submenu: preferencesSubmenu,
 			},
 			{
@@ -768,12 +768,54 @@ ${debugInfo()}`;
 			{
 				type: 'separator',
 			},
+			{
+				label: 'Check Camera & Microphone Permissions…',
+				async click() {
+					if (!is.macos) {
+						return;
+					}
+
+					const {systemPreferences} = await import('electron');
+					let cam = systemPreferences.getMediaAccessStatus('camera');
+					let mic = systemPreferences.getMediaAccessStatus('microphone');
+
+					if (cam === 'not-determined') {
+						await systemPreferences.askForMediaAccess('camera');
+						cam = systemPreferences.getMediaAccessStatus('camera');
+					}
+
+					if (mic === 'not-determined') {
+						await systemPreferences.askForMediaAccess('microphone');
+						mic = systemPreferences.getMediaAccessStatus('microphone');
+					}
+
+					const message = `Camera Access: ${cam.toUpperCase()}\nMicrophone Access: ${mic.toUpperCase()}`;
+					const detail = (cam === 'granted' && mic === 'granted')
+						? 'Permissions are properly configured for voice and video calls.'
+						: 'To enable calls, please allow Camera and Microphone in macOS System Settings > Privacy & Security.';
+
+					dialog.showMessageBox(getWindow(), {
+						type: 'info',
+						message: 'Caprine Enhanced — Media Permissions',
+						detail: `${message}\n\n${detail}`,
+						buttons: ['OK', 'Open System Settings'],
+						defaultId: 0,
+					}).then(({response}) => {
+						if (response === 1) {
+							shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy');
+						}
+					});
+				},
+			},
+			{
+				type: 'separator',
+			},
 			...switchItems,
 			{
 				type: 'separator',
 			},
 			{
-				label: 'Relaunch Caprine',
+				label: 'Relaunch Caprine Enhanced',
 				click() {
 					app.relaunch();
 					app.quit();

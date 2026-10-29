@@ -73,9 +73,21 @@
 
 			// No-op, but Messenger expects this method to be present
 			close(): void {} // eslint-disable-line @typescript-eslint/no-empty-function
+
+			static get permission(): NotificationPermission {
+				return 'granted';
+			}
+
+			static async requestPermission(): Promise<NotificationPermission> {
+				return 'granted';
+			}
 		},
 		notification,
 	);
 
-	Object.assign(window, {notification: augmentedNotification});
+	// Ensure both window.Notification and property assignment work across contexts
+	Object.assign(window, {Notification: augmentedNotification, notification: augmentedNotification});
+	try {
+		(window as any).Notification = augmentedNotification;
+	} catch {}
 })(window, Notification);

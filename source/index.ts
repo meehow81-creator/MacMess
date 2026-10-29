@@ -38,12 +38,21 @@ import {caprineIconPath} from './constants';
 
 ipc.setMaxListeners(100);
 
+// Hardware acceleration & WebRTC optimizations for Apple Silicon
+if (is.macos) {
+	app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,WebRtcHideLocalIpsWithMdns');
+}
+
 electronDebug({
 	isEnabled: true, // TODO: This is only enabled to allow `Command+R` because messenger.com sometimes gets stuck after computer waking up
 	showDevTools: false,
 });
 
-electronDl();
+electronDl({
+	saveAs: true,
+	openFolderWhenDone: false,
+	showBadge: true,
+});
 electronContextMenu({
 	showCopyImageAddress: true,
 	prepend(defaultActions) {
@@ -59,7 +68,8 @@ electronContextMenu({
 	},
 });
 
-app.setAppUserModelId('com.sindresorhus.caprine');
+app.name = 'Caprine Enhanced';
+app.setAppUserModelId('com.caprine-enhanced.mac');
 
 if (!config.get('hardwareAcceleration')) {
 	app.disableHardwareAcceleration();
@@ -245,6 +255,89 @@ function setUserLocale(): void {
 	session.defaultSession.cookies.set(cookie);
 }
 
+export function isAllowedMessengerDomain(urlString: string | undefined): boolean {
+	if (!urlString) {
+		return false;
+	}
+
+	try {
+		const {hostname} = new URL(urlString);
+		return (
+			hostname === 'messenger.com'
+			|| hostname.endsWith('.messenger.com')
+			|| hostname === 'facebook.com'
+			|| hostname.endsWith('.facebook.com')
+			|| hostname === 'workplace.com'
+			|| hostname.endsWith('.workplace.com')
+			|| hostname.endsWith('.fbcdn.net')
+			|| hostname.endsWith('.fbsbx.com')
+		);
+	} catch {
+		return false;
+	}
+}
+
+export async function requestMediaPermissions(): Promise<{camera: boolean; microphone: boolean}> {
+	if (!is.macos) {
+		return {camera: true, microphone: true};
+	}
+
+	try {
+		let micAccess = systemPreferences.getMediaAccessStatus('microphone') === 'granted';
+		if (!micAccess) {
+			micAccess = await systemPreferences.askForMediaAccess('microphone');
+		}
+
+		let cameraAccess = systemPreferences.getMediaAccessStatus('camera') === 'granted';
+		if (!cameraAccess) {
+			cameraAccess = await systemPreferences.askForMediaAccess('camera');
+		}
+
+		return {camera: cameraAccess, microphone: micAccess};
+	} catch (error) {
+		console.error('Failed to request macOS media permissions:', error);
+		return {camera: false, microphone: false};
+	}
+}
+
+function initSessionPermissions(): void {
+	session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+		const url = webContents.getURL() || details.requestingUrl;
+		if (!isAllowedMessengerDomain(url)) {
+			callback(false);
+			return;
+		}
+
+		// Allow audio/video capture for calls, notifications, and fullscreen
+		if (
+			permission === 'media'
+			|| permission === 'notifications'
+			|| permission === 'fullscreen'
+			|| permission === 'pointerLock'
+			|| permission === 'openExternal'
+		) {
+			callback(true);
+			return;
+		}
+
+		callback(true);
+	});
+
+	session.defaultSession.setPermissionCheckHandler((_webContents, _permission, requestingOrigin) => {
+		if (!isAllowedMessengerDomain(requestingOrigin)) {
+			return false;
+		}
+
+		return true;
+	});
+
+	if (typeof (session.defaultSession as any).setDevicePermissionHandler === 'function') {
+		(session.defaultSession as any).setDevicePermissionHandler((details: {origin: string}) => {
+			return isAllowedMessengerDomain(details.origin);
+		});
+	}
+}
+
 function setNotificationsMute(status: boolean): void {
 	const label = 'Mute Notifications';
 	const muteMenuItem = Menu.getApplicationMenu()!.getMenuItemById('mute-notifications')!;
@@ -349,6 +442,17 @@ function createMainWindow(): BrowserWindow {
 		}
 	});
 
+	win.on('page-title-updated', (_event, title) => {
+		// Messenger formats unread count in title: "(3) Messenger" or "(99+) Messenger"
+		const match = /^\((\d+)\+?\)/.exec(title);
+		if (match) {
+			const count = Number.parseInt(match[1], 10);
+			updateBadge(count);
+		} else if (title.includes('Messenger') && !title.startsWith('(')) {
+			updateBadge(0);
+		}
+	});
+
 	win.on('resize', () => {
 		const {isMaximized} = config.get('lastWindowState');
 		config.set('lastWindowState', {...win.getNormalBounds(), isMaximized});
@@ -367,6 +471,10 @@ function createMainWindow(): BrowserWindow {
 
 (async () => {
 	await Promise.all([ensureOnline(), app.whenReady()]);
+	initSessionPermissions();
+	if (is.macos) {
+		void requestMediaPermissions();
+	}
 	await updateAppMenu();
 	mainWindow = createMainWindow();
 
@@ -497,38 +605,77 @@ function createMainWindow(): BrowserWindow {
 		}
 	});
 
-	webContents.setWindowOpenHandler(details => {
-		if (details.disposition === 'foreground-tab' || details.disposition === 'background-tab') {
-			const url = stripTrackingFromUrl(details.url);
-			shell.openExternal(url);
-			return {action: 'deny'};
-		}
+	function isCallUrl(url: string): boolean {
+		try {
+			const parsed = new URL(url);
+			const hostname = parsed.hostname.toLowerCase();
+			const isMessengerOrFb =
+				hostname === 'messenger.com'
+				|| hostname.endsWith('.messenger.com')
+				|| hostname === 'facebook.com'
+				|| hostname.endsWith('.facebook.com');
 
-		if (details.disposition === 'new-window') {
-			if (details.url === 'about:blank' || details.url === 'about:blank#blocked') {
-				if (details.frameName !== 'about:blank') {
-					// Voice/video call popup
-					return {
-						action: 'allow',
-						overrideBrowserWindowOptions: {
-							show: true,
-							titleBarStyle: 'default',
-							webPreferences: {
-								nodeIntegration: false,
-								preload: path.join(__dirname, 'browser-call.js'),
-							},
-						},
-					};
-				}
-			} else {
-				const url = stripTrackingFromUrl(details.url);
-				shell.openExternal(url);
+			if (!isMessengerOrFb) {
+				return false;
 			}
 
-			return {action: 'deny'};
+			const pathname = parsed.pathname.toLowerCase();
+			return (
+				pathname.includes('/videocall')
+				|| pathname.includes('/groupcall')
+				|| pathname.includes('/call')
+				|| pathname.includes('/rtc')
+				|| pathname.includes('/rooms')
+			);
+		} catch {
+			return false;
+		}
+	}
+
+	webContents.setWindowOpenHandler(details => {
+		const {url} = details;
+
+		// Voice/video call popup, WebRTC rooms, or call about:blank
+		if (
+			url === 'about:blank'
+			|| url === 'about:blank#blocked'
+			|| isCallUrl(url)
+		) {
+			return {
+				action: 'allow',
+				overrideBrowserWindowOptions: {
+					show: true,
+					width: 960,
+					height: 640,
+					minWidth: 480,
+					minHeight: 360,
+					title: 'Caprine Enhanced — Call',
+					titleBarStyle: 'default',
+					webPreferences: {
+						nodeIntegration: false,
+						contextIsolation: true,
+						preload: path.join(__dirname, 'browser-call.js'),
+					},
+				},
+			};
 		}
 
-		return {action: 'allow'};
+		// External link: strip tracking and open in default system browser
+		const targetUrl = stripTrackingFromUrl(url);
+		shell.openExternal(targetUrl);
+		return {action: 'deny'};
+	});
+
+	webContents.on('did-create-window', childWindow => {
+		childWindow.setTitle('Caprine Enhanced — Call');
+		childWindow.webContents.setWindowOpenHandler(childDetails => {
+			if (isCallUrl(childDetails.url)) {
+				return {action: 'allow'};
+			}
+
+			shell.openExternal(stripTrackingFromUrl(childDetails.url));
+			return {action: 'deny'};
+		});
 	});
 
 	webContents.on('will-navigate', async (event, url) => {
@@ -565,7 +712,21 @@ function createMainWindow(): BrowserWindow {
 			return false;
 		};
 
-		if (isMessengerDotCom(url) || isTwoFactorAuth(url) || isWorkChat(url)) {
+		const isAttachmentOrCdn = (url: string): boolean => {
+			try {
+				const {hostname, pathname} = new URL(url);
+				return (
+					hostname.endsWith('.fbcdn.net')
+					|| hostname.endsWith('.fbsbx.com')
+					|| pathname.includes('/attachment/')
+					|| pathname.includes('/messages/attachment/')
+				);
+			} catch {
+				return false;
+			}
+		};
+
+		if (isMessengerDotCom(url) || isTwoFactorAuth(url) || isWorkChat(url) || isAttachmentOrCdn(url)) {
 			return;
 		}
 
@@ -609,8 +770,14 @@ app.on('activate', () => {
 	}
 });
 
-app.on('before-quit', () => {
+app.on('before-quit', async () => {
 	isQuitting = true;
+
+	try {
+		await session.defaultSession.cookies.flushStore();
+	} catch (error) {
+		console.error('Failed to flush cookies on quit:', error);
+	}
 
 	// Checking whether the window exists to work around an Electron race issue:
 	// https://github.com/sindresorhus/caprine/issues/809

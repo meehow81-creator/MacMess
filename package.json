@@ -1,8 +1,8 @@
 {
-	"name": "caprine",
-	"productName": "Caprine",
+	"name": "caprine-enhanced",
+	"productName": "Caprine Enhanced",
 	"version": "2.61.0",
-	"description": "Elegant Facebook Messenger desktop app",
+	"description": "Enhanced Facebook Messenger desktop app for macOS",
 	"license": "MIT",
 	"repository": "sindresorhus/caprine",
 	"author": {
@@ -20,11 +20,14 @@
 		"lint:stylelint": "stylelint \"css/**/*.css\"",
 		"lint": "npm run lint:xo && npm run lint:stylelint",
 		"test:tsc": "npm run build",
-		"test": "npm run test:tsc && npm run lint",
+		"test:unit": "node test/run-tests.mjs",
+		"test": "npm run test:tsc && npm run test:unit",
 		"start": "tsc && electron .",
 		"build": "tsc",
 		"dist:linux": "electron-builder --linux",
-		"dist:mac": "electron-builder --mac",
+		"dist:mac": "electron-builder --mac --arm64",
+		"build:mac:dmg": "electron-builder --mac dmg --arm64",
+		"build:mac:app": "electron-builder --mac dir --arm64",
 		"dist:win": "electron-builder --win",
 		"release": "np --no-publish"
 	},
@@ -114,26 +117,38 @@
 		"asarUnpack": [
 			"static/Icon.png"
 		],
-		"appId": "com.sindresorhus.caprine",
+		"appId": "com.caprine-enhanced.mac",
 		"mac": {
 			"category": "public.app-category.social-networking",
 			"icon": "build/icon.icns",
 			"electronUpdaterCompatibility": ">=4.5.2",
 			"darkModeSupport": true,
-			"target": {
-				"target": "default",
-				"arch": [
-					"x64",
-					"arm64"
-				]
-			},
+			"hardenedRuntime": false,
+			"gatekeeperAssess": false,
+			"entitlements": "build/entitlements.mac.plist",
+			"entitlementsInherit": "build/entitlements.mac.plist",
+			"target": [
+				{
+					"target": "dmg",
+					"arch": [
+						"arm64"
+					]
+				},
+				{
+					"target": "dir",
+					"arch": [
+						"arm64"
+					]
+				}
+			],
 			"extendInfo": {
-				"LSUIElement": 1,
-				"NSCameraUsageDescription": "Caprine needs access to your camera.",
-				"NSMicrophoneUsageDescription": "Caprine needs access to your microphone."
+				"NSCameraUsageDescription": "Caprine Enhanced needs access to your camera for video calls.",
+				"NSMicrophoneUsageDescription": "Caprine Enhanced needs access to your microphone for voice and video calls."
 			}
 		},
 		"dmg": {
+			"title": "Caprine Enhanced",
+			"artifactName": "Caprine-Enhanced-${version}-mac-${arch}.${ext}",
 			"iconSize": 160,
 			"contents": [
 				{
