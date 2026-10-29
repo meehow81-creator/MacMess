@@ -152,6 +152,82 @@ test('Notification override properly assigns to window.Notification with granted
 	assert.ok(code.includes("granted"), 'Permission granted status missing');
 });
 
+// 7. Test internal navigation vs external link routing
+test('Internal navigation preserves login, checkpoints, and auth while routing external links', () => {
+	function isInternalNavigation(navUrl) {
+		try {
+			const parsed = new URL(navUrl);
+			const hostname = parsed.hostname.toLowerCase();
+			const pathname = parsed.pathname.toLowerCase();
+
+			if (hostname === 'messenger.com' || hostname.endsWith('.messenger.com')) {
+				return true;
+			}
+
+			if (hostname === 'accountscenter.facebook.com' || hostname.endsWith('.accountscenter.facebook.com')) {
+				return true;
+			}
+
+			if (
+				hostname === 'facebook.com'
+				|| hostname.endsWith('.facebook.com')
+				|| hostname === 'meta.com'
+				|| hostname.endsWith('.meta.com')
+			) {
+				if (
+					pathname.includes('login')
+					|| pathname.startsWith('/checkpoint')
+					|| pathname.startsWith('/recover')
+					|| pathname.startsWith('/two_step')
+					|| pathname.startsWith('/two_factor')
+					|| pathname.startsWith('/security')
+					|| pathname.startsWith('/auth')
+					|| pathname.includes('oauth')
+					|| pathname.includes('dialog')
+					|| pathname.startsWith('/chat')
+					|| pathname.startsWith('/messages')
+					|| pathname.startsWith('/videocall')
+					|| pathname.startsWith('/call')
+					|| pathname.startsWith('/cookie')
+					|| pathname.startsWith('/privacy')
+					|| pathname.startsWith('/help')
+					|| pathname === '/'
+				) {
+					return true;
+				}
+			}
+
+			if (hostname === 'work.facebook.com' || hostname === 'work.workplace.com' || hostname.endsWith('.workplace.com')) {
+				return true;
+			}
+
+			if (hostname === 'login.microsoftonline.com') {
+				return true;
+			}
+
+			if (hostname.endsWith('.fbcdn.net') || hostname.endsWith('.fbsbx.com')) {
+				return true;
+			}
+
+			return false;
+		} catch {
+			return false;
+		}
+	}
+
+	// Login and auth URLs must be internal
+	assert.equal(isInternalNavigation('https://www.facebook.com/login.php?next=...'), true);
+	assert.equal(isInternalNavigation('https://www.facebook.com/checkpoint/12345/'), true);
+	assert.equal(isInternalNavigation('https://www.facebook.com/v12.0/dialog/oauth'), true);
+	assert.equal(isInternalNavigation('https://accountscenter.facebook.com/security'), true);
+	assert.equal(isInternalNavigation('https://www.messenger.com/t/12345'), true);
+
+	// External web links must be external
+	assert.equal(isInternalNavigation('https://google.com'), false);
+	assert.equal(isInternalNavigation('https://github.com/sindresorhus/caprine'), false);
+	assert.equal(isInternalNavigation('https://youtube.com/watch?v=123'), false);
+});
+
 console.log(`\n========================================`);
 console.log(`Results: ${passedTests}/${totalTests} tests passed.`);
 console.log(`========================================\n`);

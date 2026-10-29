@@ -879,13 +879,15 @@ window.addEventListener('dblclick', (event: Event) => {
 
 window.addEventListener('load', async () => {
 	if (location.pathname.startsWith('/login')) {
-		const keepMeSignedInCheckbox = document.querySelector<HTMLInputElement>('[id^="u_0_0"]')!;
-		const keepMeSignedInConfig = await ipc.callMain<undefined, boolean>('get-config-keepMeSignedIn');
-		keepMeSignedInCheckbox.checked = keepMeSignedInConfig;
-		keepMeSignedInCheckbox.addEventListener('change', async () => {
-			const keepMeSignedIn = await ipc.callMain<undefined, boolean>('get-config-keepMeSignedIn');
-			await ipc.callMain('set-config-keepMeSignedIn', keepMeSignedIn);
-		});
+		const keepMeSignedInCheckbox = document.querySelector<HTMLInputElement>('[id^="u_0_0"], input[type="checkbox"]');
+		if (keepMeSignedInCheckbox) {
+			const keepMeSignedInConfig = await ipc.callMain<undefined, boolean>('get-config-keepMeSignedIn');
+			keepMeSignedInCheckbox.checked = keepMeSignedInConfig;
+			keepMeSignedInCheckbox.addEventListener('change', async () => {
+				const keepMeSignedIn = await ipc.callMain<undefined, boolean>('get-config-keepMeSignedIn');
+				await ipc.callMain('set-config-keepMeSignedIn', keepMeSignedIn);
+			});
+		}
 	}
 });
 

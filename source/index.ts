@@ -357,7 +357,7 @@ function createMainWindow(): BrowserWindow {
 	// Messenger or Work Chat
 	const mainURL = config.get('useWorkChat')
 		? 'https://work.facebook.com/chat'
-		: 'https://www.messenger.com/login/';
+		: 'https://www.messenger.com/';
 
 	const win = new BrowserWindow({
 		title: app.name,
@@ -632,6 +632,39 @@ function createMainWindow(): BrowserWindow {
 		}
 	}
 
+	function isAuthPopupUrl(url: string): boolean {
+		try {
+			const parsed = new URL(url);
+			const hostname = parsed.hostname.toLowerCase();
+			const isMeta =
+				hostname === 'facebook.com'
+				|| hostname.endsWith('.facebook.com')
+				|| hostname === 'meta.com'
+				|| hostname.endsWith('.meta.com')
+				|| hostname === 'accountscenter.facebook.com'
+				|| hostname.endsWith('.accountscenter.facebook.com')
+				|| hostname === 'messenger.com'
+				|| hostname.endsWith('.messenger.com');
+
+			if (!isMeta) {
+				return false;
+			}
+
+			const path = parsed.pathname.toLowerCase();
+			return (
+				path.includes('login')
+				|| path.includes('auth')
+				|| path.includes('checkpoint')
+				|| path.includes('oauth')
+				|| path.includes('recover')
+				|| path.includes('two_step')
+				|| path.includes('two_factor')
+			);
+		} catch {
+			return false;
+		}
+	}
+
 	webContents.setWindowOpenHandler(details => {
 		const {url} = details;
 
@@ -660,6 +693,23 @@ function createMainWindow(): BrowserWindow {
 			};
 		}
 
+		// Authentication / OAuth / 2FA popups for Facebook / Meta
+		if (isAuthPopupUrl(url)) {
+			return {
+				action: 'allow',
+				overrideBrowserWindowOptions: {
+					show: true,
+					width: 600,
+					height: 700,
+					title: 'Caprine Enhanced — Login',
+					webPreferences: {
+						nodeIntegration: false,
+						contextIsolation: true,
+					},
+				},
+			};
+		}
+
 		// External link: strip tracking and open in default system browser
 		const targetUrl = stripTrackingFromUrl(url);
 		shell.openExternal(targetUrl);
@@ -669,7 +719,7 @@ function createMainWindow(): BrowserWindow {
 	webContents.on('did-create-window', childWindow => {
 		childWindow.setTitle('Caprine Enhanced — Call');
 		childWindow.webContents.setWindowOpenHandler(childDetails => {
-			if (isCallUrl(childDetails.url)) {
+			if (isCallUrl(childDetails.url) || isAuthPopupUrl(childDetails.url)) {
 				return {action: 'allow'};
 			}
 
@@ -679,59 +729,89 @@ function createMainWindow(): BrowserWindow {
 	});
 
 	webContents.on('will-navigate', async (event, url) => {
-		const isMessengerDotCom = (url: string): boolean => {
-			const {hostname} = new URL(url);
-			return hostname.endsWith('.messenger.com');
-		};
-
-		const isTwoFactorAuth = (url: string): boolean => {
-			const twoFactorAuthURL = 'https://www.facebook.com/checkpoint';
-			return url.startsWith(twoFactorAuthURL);
-		};
-
-		const isWorkChat = (url: string): boolean => {
-			const {hostname, pathname} = new URL(url);
-
-			if (hostname === 'work.facebook.com' || hostname === 'work.workplace.com') {
-				return true;
-			}
-
-			if (
-				// Example: https://company-name.facebook.com/login or
-				//   		https://company-name.workplace.com/login
-				(hostname.endsWith('.facebook.com') || hostname.endsWith('.workplace.com'))
-				&& (pathname.startsWith('/login') || pathname.startsWith('/chat'))
-			) {
-				return true;
-			}
-
-			if (hostname === 'login.microsoftonline.com') {
-				return true;
-			}
-
-			return false;
-		};
-
-		const isAttachmentOrCdn = (url: string): boolean => {
+		const isInternalNavigation = (navUrl: string): boolean => {
 			try {
-				const {hostname, pathname} = new URL(url);
-				return (
+				const parsed = new URL(navUrl);
+				const hostname = parsed.hostname.toLowerCase();
+				const pathname = parsed.pathname.toLowerCase();
+
+				// All messenger.com domains
+				if (hostname === 'messenger.com' || hostname.endsWith('.messenger.com')) {
+					return true;
+				}
+
+				// Accounts center
+				if (hostname === 'accountscenter.facebook.com' || hostname.endsWith('.accountscenter.facebook.com')) {
+					return true;
+				}
+
+				// Facebook & Meta authentication, login, checkpoints, 2FA, OAuth
+				if (
+					hostname === 'facebook.com'
+					|| hostname.endsWith('.facebook.com')
+					|| hostname === 'meta.com'
+					|| hostname.endsWith('.meta.com')
+				) {
+					if (
+						pathname.includes('login')
+						|| pathname.startsWith('/checkpoint')
+						|| pathname.startsWith('/recover')
+						|| pathname.startsWith('/two_step')
+						|| pathname.startsWith('/two_factor')
+						|| pathname.startsWith('/security')
+						|| pathname.startsWith('/auth')
+						|| pathname.includes('oauth')
+						|| pathname.includes('dialog')
+						|| pathname.startsWith('/chat')
+						|| pathname.startsWith('/messages')
+						|| pathname.startsWith('/videocall')
+						|| pathname.startsWith('/call')
+						|| pathname.startsWith('/cookie')
+						|| pathname.startsWith('/privacy')
+						|| pathname.startsWith('/help')
+						|| pathname === '/'
+					) {
+						return true;
+					}
+				}
+
+				// Workchat / workplace
+				if (
+					hostname === 'work.facebook.com'
+					|| hostname === 'work.workplace.com'
+					|| hostname.endsWith('.workplace.com')
+				) {
+					return true;
+				}
+
+				// Microsoft Online SSO for workplace
+				if (hostname === 'login.microsoftonline.com') {
+					return true;
+				}
+
+				// Media attachments and CDN assets
+				if (
 					hostname.endsWith('.fbcdn.net')
 					|| hostname.endsWith('.fbsbx.com')
 					|| pathname.includes('/attachment/')
 					|| pathname.includes('/messages/attachment/')
-				);
+				) {
+					return true;
+				}
+
+				return false;
 			} catch {
 				return false;
 			}
 		};
 
-		if (isMessengerDotCom(url) || isTwoFactorAuth(url) || isWorkChat(url) || isAttachmentOrCdn(url)) {
+		if (isInternalNavigation(url)) {
 			return;
 		}
 
 		event.preventDefault();
-		await shell.openExternal(url);
+		const cleanUrl = stripTrackingFromUrl(url);
+		await shell.openExternal(cleanUrl);
 	});
 })();
 
