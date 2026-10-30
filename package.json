@@ -112,7 +112,12 @@
 	"build": {
 		"files": [
 			"**/*",
-			"!media${/*}"
+			"!media${/*}",
+			"!dist/**",
+			"!work/**",
+			"!outputs/**",
+			"!**/*.dmg",
+			"!**/*.blockmap"
 		],
 		"asarUnpack": [
 			"static/Icon.png"
