@@ -8,9 +8,9 @@ MacMess is an experimental, community-maintained fork of [Caprine](https://githu
 
 ## Download for macOS Apple Silicon
 
-**[Download MacMess.dmg](https://github.com/meehow81-creator/MacMess/releases/download/v2.61.0-macmess-preview.1/MacMess-2.61.0-mac-arm64.dmg)** · [Release notes and SHA-256 checksum](https://github.com/meehow81-creator/MacMess/releases/tag/v2.61.0-macmess-preview.1)
+**[Download MacMess.dmg](https://github.com/meehow81-creator/MacMess/releases/download/v2.61.0-macmess-preview.2/MacMess-2.61.0-preview2-mac-arm64.dmg)** · [Release notes and SHA-256 checksum](https://github.com/meehow81-creator/MacMess/releases/tag/v2.61.0-macmess-preview.2)
 
-Experimental preview for M1/M2/M3/M4 Macs. Open the DMG and drag MacMess into Applications. This build is unsigned and not notarized by Apple; macOS may block it. Intel Macs are not supported by this artifact. Existing Caprine installations and profiles are separate.
+Experimental preview for M1/M2/M3/M4 Macs. Open the DMG and drag MacMess into Applications. This build has a verified ad-hoc signature, but no Apple Developer ID or notarization; macOS may still block it. Intel Macs are not supported by this artifact. Existing Caprine installations and profiles are separate.
 
 ## What is new
 
@@ -32,7 +32,7 @@ npm test
 npm run build:mac:app
 ```
 
-The macOS target is arm64. No signed or notarized MacMess release is provided yet. Do not treat the inherited Caprine download links as MacMess downloads. A new name/application identity does not migrate your existing Caprine profile.
+The macOS target is arm64. No Developer ID signed or notarized MacMess release is provided yet. Do not treat the inherited Caprine download links as MacMess downloads. A new name/application identity does not migrate your existing Caprine profile.
 
 ## Verification and limitations
 

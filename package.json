@@ -149,7 +149,8 @@
 			"extendInfo": {
 				"NSCameraUsageDescription": "MacMess needs access to your camera for video calls.",
 				"NSMicrophoneUsageDescription": "MacMess needs access to your microphone for voice and video calls."
-			}
+			},
+			"sign": "build/sign-macos.cjs"
 		},
 		"dmg": {
 			"title": "MacMess",
