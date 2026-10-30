@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; media-src blob:; connect-src 'none'; img-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Próbna rozmowa — Caprine Enhanced</title>
+<link rel="stylesheet" href="media-test.css">
+<script defer src="media-test-controller.js"></script>
+<script defer src="media-test.js"></script>
+</head>
+<body>
+<main>
+<h1>Sprawdź obraz i dźwięk</h1>
+<p>Przygotuj się do rozmowy. Test działa lokalnie, a nagranie pozostaje tylko w pamięci do zamknięcia okna.</p>
+<section aria-labelledby="camera-heading">
+<h2 id="camera-heading">1. Kamera</h2>
+<label for="camera">Kamera</label><select id="camera"><option value="">Domyślna kamera</option></select>
+<button id="preview">Włącz podgląd</button><button id="camera-stop" disabled>Wyłącz kamerę</button>
+<video id="video" autoplay muted playsinline aria-label="Podgląd kamery"></video>
+</section>
+<section aria-labelledby="audio-heading">
+<h2 id="audio-heading">2. Mikrofon i odsłuch</h2>
+<label for="microphone">Mikrofon</label><select id="microphone"><option value="">Domyślny mikrofon</option></select>
+<p>Nagraj do 10 sekund wypowiedzi, a następnie jej posłuchaj. Dźwięk odtworzy się przez aktualne wyjście dźwięku macOS.</p>
+<button id="record">Nagraj próbkę</button><button id="stop" disabled>Zakończ nagrywanie</button>
+<label for="level">Poziom mikrofonu</label><meter id="level" min="0" max="1" value="0"></meter>
+<audio id="playback" controls controlslist="nodownload" aria-label="Odsłuch próbnej wypowiedzi"></audio>
+<button id="tone">Sprawdź głośniki</button><button id="clear">Usuń nagranie</button>
+</section>
+<p id="status" role="status" aria-live="polite">Gotowe. Włącz kamerę lub nagraj próbkę.</p>
+<p class="note">Test sprawdza urządzenia na tym komputerze. Nie sprawdza połączenia z Messengerem ani dźwięku u rozmówcy. Wybór urządzeń tutaj dotyczy wyłącznie tego testu.</p>
+<button id="finish">Zakończ test</button>
+</main>
+</body>
+</html>
