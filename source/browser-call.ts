@@ -1,10 +1,10 @@
 import {webFrame} from 'electron';
 
-// Browser script for Caprine Enhanced Call Window
+// Browser script for MacMess Call Window
 (async () => {
 	document.addEventListener('DOMContentLoaded', () => {
 		if (!document.title || document.title === 'about:blank') {
-			document.title = 'Caprine Enhanced — Call';
+			document.title = 'MacMess — Call';
 		}
 	});
 

@@ -71,7 +71,7 @@
 
 	function explain(error) {
 		const messages = {
-			NotAllowedError: 'Brak dostępu. Sprawdź uprawnienia Caprine Enhanced w Ustawieniach systemowych → Prywatność i ochrona → Mikrofon / Kamera.',
+			NotAllowedError: 'Brak dostępu. Sprawdź uprawnienia MacMess w Ustawieniach systemowych → Prywatność i ochrona → Mikrofon / Kamera.',
 			NotFoundError: 'Nie znaleziono urządzenia. Podłącz kamerę lub mikrofon i spróbuj ponownie.',
 			NotReadableError: 'Urządzenie jest niedostępne. Zamknij aplikację, która może go używać, i spróbuj ponownie.',
 			OverconstrainedError: 'Wybrane urządzenie jest niedostępne. Wybierz inne lub urządzenie domyślne.',

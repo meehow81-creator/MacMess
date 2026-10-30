@@ -1,10 +1,10 @@
 {
-	"name": "caprine-enhanced",
-	"productName": "Caprine Enhanced",
+	"name": "macmess",
+	"productName": "MacMess",
 	"version": "2.61.0",
-	"description": "Enhanced Facebook Messenger desktop app for macOS",
+	"description": "Unofficial Messenger desktop app for macOS, based on Caprine",
 	"license": "MIT",
-	"repository": "sindresorhus/caprine",
+	"repository": "meehow81-creator/MacMess",
 	"author": {
 		"name": "Sindre Sorhus",
 		"email": "sindresorhus@gmail.com",
@@ -117,7 +117,7 @@
 		"asarUnpack": [
 			"static/Icon.png"
 		],
-		"appId": "com.caprine-enhanced.mac",
+		"appId": "io.github.meehow81-creator.macmess",
 		"mac": {
 			"category": "public.app-category.social-networking",
 			"icon": "build/icon.icns",
@@ -142,13 +142,13 @@
 				}
 			],
 			"extendInfo": {
-				"NSCameraUsageDescription": "Caprine Enhanced needs access to your camera for video calls.",
-				"NSMicrophoneUsageDescription": "Caprine Enhanced needs access to your microphone for voice and video calls."
+				"NSCameraUsageDescription": "MacMess needs access to your camera for video calls.",
+				"NSMicrophoneUsageDescription": "MacMess needs access to your microphone for voice and video calls."
 			}
 		},
 		"dmg": {
-			"title": "Caprine Enhanced",
-			"artifactName": "Caprine-Enhanced-${version}-mac-${arch}.${ext}",
+			"title": "MacMess",
+			"artifactName": "MacMess-${version}-mac-${arch}.${ext}",
 			"iconSize": 160,
 			"contents": [
 				{

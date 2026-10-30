@@ -14,9 +14,9 @@ export function openMediaTestWindow(): void {
 
 	const pagePath = path.join(__dirname, '../static/media-test.html');
 	const pageUrl = pathToFileURL(pagePath).href;
-	const testSession = session.fromPartition('caprine-media-test');
+	const testSession = session.fromPartition('macmess-media-test');
 	const win = new BrowserWindow({
-		title: 'Próbna rozmowa — Caprine Enhanced',
+		title: 'Próbna rozmowa — MacMess',
 		width: 1000,
 		height: 820,
 		minWidth: 560,

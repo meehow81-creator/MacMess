@@ -9,7 +9,7 @@ const {isAllowedMessengerDomain, isAllowedPermission} = permissions;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
-console.log('🧪 Starting Caprine Enhanced Unit Tests...\n');
+console.log('🧪 Starting MacMess Unit Tests...\n');
 
 let passedTests = 0;
 let totalTests = 0;
@@ -106,7 +106,7 @@ test('Window title parser accurately extracts unread badge count', () => {
 	}
 
 	assert.equal(parseUnreadCount('(1) Messenger'), 1);
-	assert.equal(parseUnreadCount('(5) Caprine Enhanced'), 5);
+	assert.equal(parseUnreadCount('(5) MacMess'), 5);
 	assert.equal(parseUnreadCount('(99+) Messenger'), 99);
 	assert.equal(parseUnreadCount('(150) Messenger'), 150);
 	assert.equal(parseUnreadCount('Messenger'), 0);
@@ -117,9 +117,9 @@ test('Window title parser accurately extracts unread badge count', () => {
 test('Application identity is isolated from original Caprine', () => {
 	const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
 
-	assert.equal(pkg.name, 'caprine-enhanced');
-	assert.equal(pkg.productName, 'Caprine Enhanced');
-	assert.equal(pkg.build.appId, 'com.caprine-enhanced.mac');
+	assert.equal(pkg.name, 'macmess');
+	assert.equal(pkg.productName, 'MacMess');
+	assert.equal(pkg.build.appId, 'io.github.meehow81-creator.macmess');
 	assert.equal(pkg.build.mac.extendInfo?.LSUIElement, undefined, 'LSUIElement must not be enabled');
 	assert.ok(pkg.build.mac.extendInfo?.NSCameraUsageDescription, 'Camera description missing');
 	assert.ok(pkg.build.mac.extendInfo?.NSMicrophoneUsageDescription, 'Microphone description missing');

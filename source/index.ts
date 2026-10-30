@@ -73,8 +73,13 @@ electronContextMenu({
 	},
 });
 
-app.name = 'Caprine Enhanced';
-app.setAppUserModelId('com.caprine-enhanced.mac');
+app.name = 'MacMess';
+app.setAppUserModelId('io.github.meehow81-creator.macmess');
+app.setAboutPanelOptions({
+	applicationName: 'MacMess',
+	copyright: 'Based on Caprine by Sindre Sorhus and contributors. MIT license.',
+	website: 'https://github.com/meehow81-creator/MacMess',
+});
 
 if (!config.get('hardwareAcceleration')) {
 	app.disableHardwareAcceleration();
@@ -650,7 +655,7 @@ function createMainWindow(): BrowserWindow {
 					height: 640,
 					minWidth: 480,
 					minHeight: 360,
-					title: 'Caprine Enhanced — Call',
+					title: 'MacMess — Call',
 					titleBarStyle: 'default',
 					webPreferences: {
 						nodeIntegration: false,
@@ -669,7 +674,7 @@ function createMainWindow(): BrowserWindow {
 					show: true,
 					width: 600,
 					height: 700,
-					title: 'Caprine Enhanced — Login',
+					title: 'MacMess — Login',
 					webPreferences: {
 						nodeIntegration: false,
 						contextIsolation: true,

@@ -220,10 +220,10 @@ export default async function updateMenu(): Promise<Menu> {
 				const filePath = path.join(app.getPath('userData'), 'custom.css');
 				const defaultCustomStyle = `/*
 This is the custom styles file where you can add anything you want.
-The styles here will be injected into Caprine and will override default styles.
+The styles here will be injected into MacMess and will override default styles.
 If you want to disable styles but keep the config, just comment the lines that you don't want to be used.
 
-Press Command/Ctrl+R in Caprine to see your changes.
+Press Command/Ctrl+R in MacMess to see your changes.
 */
 `;
 
@@ -316,7 +316,7 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			checked: config.get('isSpellCheckerEnabled'),
 			click() {
 				config.set('isSpellCheckerEnabled', !config.get('isSpellCheckerEnabled'));
-				showRestartDialog('Caprine needs to be restarted to enable or disable the spell checker.');
+				showRestartDialog('MacMess needs to be restarted to enable or disable the spell checker.');
 			},
 		},
 		{
@@ -325,7 +325,7 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			checked: config.get('hardwareAcceleration'),
 			click() {
 				config.set('hardwareAcceleration', !config.get('hardwareAcceleration'));
-				showRestartDialog('Caprine needs to be restarted to change hardware acceleration.');
+				showRestartDialog('MacMess needs to be restarted to change hardware acceleration.');
 			},
 		},
 		{
@@ -675,11 +675,11 @@ Press Command/Ctrl+R in Caprine to see your changes.
 	const helpSubmenu: MenuItemConstructorOptions[] = [
 		openUrlMenuItem({
 			label: 'Website',
-			url: 'https://github.com/sindresorhus/caprine',
+			url: 'https://github.com/meehow81-creator/MacMess',
 		}),
 		openUrlMenuItem({
 			label: 'Source Code',
-			url: 'https://github.com/sindresorhus/caprine',
+			url: 'https://github.com/meehow81-creator/MacMess',
 		}),
 		openUrlMenuItem({
 			label: 'Donate…',
@@ -697,8 +697,8 @@ Press Command/Ctrl+R in Caprine to see your changes.
 ${debugInfo()}`;
 
 				openNewGitHubIssue({
-					user: 'sindresorhus',
-					repo: 'caprine',
+					user: 'meehow81-creator',
+					repo: 'MacMess',
 					body,
 				});
 			},
@@ -713,8 +713,8 @@ ${debugInfo()}`;
 			aboutMenuItem({
 				icon: caprineIconPath,
 				copyright: 'Created by Sindre Sorhus',
-				text: 'Maintainers:\nDušan Simić\nLefteris Garyfalakis\nMichael Quevillon\nNikolas Spiridakis',
-				website: 'https://github.com/sindresorhus/caprine',
+				text: 'MacMess is based on Caprine. Original maintainers:\nDušan Simić\nLefteris Garyfalakis\nMichael Quevillon\nNikolas Spiridakis',
+				website: 'https://github.com/meehow81-creator/MacMess',
 			}),
 		);
 	}
@@ -756,7 +756,7 @@ ${debugInfo()}`;
 	const macosTemplate: MenuItemConstructorOptions[] = [
 		appMenu([
 			{
-				label: 'Caprine Enhanced Preferences',
+				label: 'MacMess Preferences',
 				submenu: preferencesSubmenu,
 			},
 			{
@@ -801,7 +801,7 @@ ${debugInfo()}`;
 
 					dialog.showMessageBox(getWindow(), {
 						type: 'info',
-						message: 'Caprine Enhanced — Media Permissions',
+						message: 'MacMess — Media Permissions',
 						detail: `${message}\n\n${detail}`,
 						buttons: ['OK', 'Open System Settings'],
 						defaultId: 0,
@@ -827,7 +827,7 @@ ${debugInfo()}`;
 				type: 'separator',
 			},
 			{
-				label: 'Relaunch Caprine Enhanced',
+				label: 'Relaunch MacMess',
 				click() {
 					app.relaunch();
 					app.quit();
@@ -877,7 +877,7 @@ ${debugInfo()}`;
 					type: 'separator',
 				},
 				{
-					label: 'Caprine Settings',
+					label: 'MacMess Settings',
 					submenu: preferencesSubmenu,
 				},
 				{
@@ -895,7 +895,7 @@ ${debugInfo()}`;
 					type: 'separator',
 				},
 				{
-					label: 'Relaunch Caprine',
+					label: 'Relaunch MacMess',
 					click() {
 						app.relaunch();
 						app.quit();
