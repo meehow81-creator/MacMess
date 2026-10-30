@@ -6,6 +6,12 @@
 
 MacMess is an experimental, community-maintained fork of [Caprine](https://github.com/sindresorhus/caprine), focused on macOS and Apple Silicon. It is not affiliated with Meta, Facebook, or Messenger. Original Caprine authors and contributors retain credit; see [the MIT license](license) and [upstream documentation](docs/UPSTREAM_README.md).
 
+## Download for macOS Apple Silicon
+
+**[Download MacMess.dmg](https://github.com/meehow81-creator/MacMess/releases/download/v2.61.0-macmess-preview.1/MacMess-2.61.0-mac-arm64.dmg)** · [Release notes and SHA-256 checksum](https://github.com/meehow81-creator/MacMess/releases/tag/v2.61.0-macmess-preview.1)
+
+Experimental preview for M1/M2/M3/M4 Macs. Open the DMG and drag MacMess into Applications. This build is unsigned and not notarized by Apple; macOS may block it. Intel Macs are not supported by this artifact. Existing Caprine installations and profiles are separate.
+
 ## What is new
 
 - Local camera preview and device selection.
