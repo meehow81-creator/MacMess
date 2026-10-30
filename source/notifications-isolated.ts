@@ -118,11 +118,7 @@
 					}
 				}
 
-				try {
-					return await originalGetUserMedia(constraints);
-				} catch {
-					return originalGetUserMedia(constraints);
-				}
+				return originalGetUserMedia(constraints);
 			};
 		}
 

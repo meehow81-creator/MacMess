@@ -35,6 +35,9 @@ import {process as processEmojiUrl} from './emoji';
 import ensureOnline from './ensure-online';
 import {setUpMenuBarMode} from './menu-bar-mode';
 import {caprineIconPath} from './constants';
+import {isAllowedPermission} from './permissions';
+
+export {isAllowedMessengerDomain} from './permissions';
 
 ipc.setMaxListeners(100);
 
@@ -257,41 +260,19 @@ function setUserLocale(): void {
 	session.defaultSession.cookies.set(cookie);
 }
 
-export function isAllowedMessengerDomain(urlString: string | undefined): boolean {
-	if (!urlString) {
-		return false;
-	}
-
-	try {
-		const {hostname} = new URL(urlString);
-		return (
-			hostname === 'messenger.com'
-			|| hostname.endsWith('.messenger.com')
-			|| hostname === 'facebook.com'
-			|| hostname.endsWith('.facebook.com')
-			|| hostname === 'workplace.com'
-			|| hostname.endsWith('.workplace.com')
-			|| hostname.endsWith('.fbcdn.net')
-			|| hostname.endsWith('.fbsbx.com')
-		);
-	} catch {
-		return false;
-	}
-}
-
-export async function requestMediaPermissions(): Promise<{camera: boolean; microphone: boolean}> {
+export async function requestMediaPermissions(mediaTypes: readonly string[] = ['audio', 'video']): Promise<{camera: boolean; microphone: boolean}> {
 	if (!is.macos) {
 		return {camera: true, microphone: true};
 	}
 
 	try {
 		let micAccess = systemPreferences.getMediaAccessStatus('microphone') === 'granted';
-		if (!micAccess) {
+		if (mediaTypes.includes('audio') && systemPreferences.getMediaAccessStatus('microphone') === 'not-determined') {
 			micAccess = await systemPreferences.askForMediaAccess('microphone');
 		}
 
 		let cameraAccess = systemPreferences.getMediaAccessStatus('camera') === 'granted';
-		if (!cameraAccess) {
+		if (mediaTypes.includes('video') && systemPreferences.getMediaAccessStatus('camera') === 'not-determined') {
 			cameraAccess = await systemPreferences.askForMediaAccess('camera');
 		}
 
@@ -303,41 +284,29 @@ export async function requestMediaPermissions(): Promise<{camera: boolean; micro
 }
 
 function initSessionPermissions(): void {
-	session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
-		const url = webContents.getURL() || details.requestingUrl;
-		if (!isAllowedMessengerDomain(url)) {
+	session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback, details) => {
+		// Authorize the requesting frame, rather than its top-level window.
+		const origin = details.securityOrigin ?? details.requestingUrl;
+		if (!isAllowedPermission(origin, permission)) {
 			callback(false);
 			return;
 		}
 
-		// Allow audio/video capture for calls, notifications, and fullscreen
-		if (
-			permission === 'media'
-			|| permission === 'notifications'
-			|| permission === 'fullscreen'
-			|| permission === 'pointerLock'
-			|| permission === 'openExternal'
-		) {
-			callback(true);
+		if (permission === 'media') {
+			const types = details.mediaTypes ?? ['audio', 'video'];
+			void requestMediaPermissions(types).then(access => {
+				callback(types.every(type => type === 'audio' ? access.microphone : access.camera));
+			});
 			return;
 		}
 
 		callback(true);
 	});
 
-	session.defaultSession.setPermissionCheckHandler((_webContents, _permission, requestingOrigin) => {
-		if (!isAllowedMessengerDomain(requestingOrigin)) {
-			return false;
-		}
+	session.defaultSession.setPermissionCheckHandler((_webContents, permission, requestingOrigin) => isAllowedPermission(requestingOrigin, permission));
 
-		return true;
-	});
-
-	if (typeof (session.defaultSession as any).setDevicePermissionHandler === 'function') {
-		(session.defaultSession as any).setDevicePermissionHandler((details: {origin: string}) => {
-			return isAllowedMessengerDomain(details.origin);
-		});
-	}
+	// Calls do not require USB, HID, or serial device access.
+	session.defaultSession.setDevicePermissionHandler(() => false);
 }
 
 function setNotificationsMute(status: boolean): void {
@@ -474,9 +443,6 @@ function createMainWindow(): BrowserWindow {
 (async () => {
 	await Promise.all([ensureOnline(), app.whenReady()]);
 	initSessionPermissions();
-	if (is.macos) {
-		void requestMediaPermissions();
-	}
 	await updateAppMenu();
 	mainWindow = createMainWindow();
 
@@ -719,7 +685,7 @@ function createMainWindow(): BrowserWindow {
 	});
 
 	webContents.on('did-create-window', childWindow => {
-		childWindow.setTitle('Caprine Enhanced — Call');
+		// Preserve the title assigned to call or authentication windows.
 		childWindow.webContents.setWindowOpenHandler(childDetails => {
 			if (isCallUrl(childDetails.url) || isAuthPopupUrl(childDetails.url)) {
 				return {action: 'allow'};
@@ -736,6 +702,10 @@ function createMainWindow(): BrowserWindow {
 				const parsed = new URL(navUrl);
 				const hostname = parsed.hostname.toLowerCase();
 				const pathname = parsed.pathname.toLowerCase();
+
+				if (parsed.protocol !== 'https:') {
+					return false;
+				}
 
 				// All messenger.com domains
 				if (hostname === 'messenger.com' || hostname.endsWith('.messenger.com')) {
@@ -795,8 +765,6 @@ function createMainWindow(): BrowserWindow {
 				if (
 					hostname.endsWith('.fbcdn.net')
 					|| hostname.endsWith('.fbsbx.com')
-					|| pathname.includes('/attachment/')
-					|| pathname.includes('/messages/attachment/')
 				) {
 					return true;
 				}
@@ -875,7 +843,7 @@ ipc.answerRenderer(
 	'notification',
 	({id, title, body, icon, silent}: {id: number; title: string; body: string; icon: string; silent: boolean}) => {
 		// Don't send notifications when the window is focused
-		if (mainWindow.isFocused()) {
+		if (mainWindow.isFocused() || config.get('notificationsMuted') || isDNDEnabled) {
 			return;
 		}
 

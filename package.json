@@ -20,7 +20,7 @@
 		"lint:stylelint": "stylelint \"css/**/*.css\"",
 		"lint": "npm run lint:xo && npm run lint:stylelint",
 		"test:tsc": "npm run build",
-		"test:unit": "node test/run-tests.mjs",
+		"test:unit": "node test/run-tests.mjs && node --test test/media.test.cjs",
 		"test": "npm run test:tsc && npm run test:unit",
 		"start": "tsc && electron .",
 		"build": "tsc",

@@ -36,11 +36,7 @@ try {
 							};
 						}
 					}
-					try {
-						return await orig(c);
-					} catch (e) {
-						return orig(c);
-					}
+					return orig(c);
 				};
 			}
 

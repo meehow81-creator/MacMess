@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import permissions from '../dist-js/permissions.js';
+
+const {isAllowedMessengerDomain, isAllowedPermission} = permissions;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -26,34 +29,29 @@ function test(name, fn) {
 
 // 1. Test isAllowedMessengerDomain logic
 test('Domain validation allows legitimate Messenger & Facebook domains', () => {
-	function isAllowedMessengerDomain(urlString) {
-		if (!urlString) return false;
-		try {
-			const {hostname} = new URL(urlString);
-			return (
-				hostname === 'messenger.com'
-				|| hostname.endsWith('.messenger.com')
-				|| hostname === 'facebook.com'
-				|| hostname.endsWith('.facebook.com')
-				|| hostname === 'workplace.com'
-				|| hostname.endsWith('.workplace.com')
-				|| hostname.endsWith('.fbcdn.net')
-				|| hostname.endsWith('.fbsbx.com')
-			);
-		} catch {
-			return false;
-		}
-	}
-
 	assert.equal(isAllowedMessengerDomain('https://www.messenger.com/login'), true);
 	assert.equal(isAllowedMessengerDomain('https://messenger.com/t/12345'), true);
 	assert.equal(isAllowedMessengerDomain('https://work.facebook.com/chat'), true);
-	assert.equal(isAllowedMessengerDomain('https://static.xx.fbcdn.net/rsrc.php'), true);
-	assert.equal(isAllowedMessengerDomain('https://cdn.fbsbx.com/v/t59/file.pdf'), true);
+	assert.equal(isAllowedMessengerDomain('https://static.xx.fbcdn.net/rsrc.php'), false);
+	assert.equal(isAllowedMessengerDomain('https://cdn.fbsbx.com/v/t59/file.pdf'), false);
 	assert.equal(isAllowedMessengerDomain('https://evil-messenger.com'), false);
 	assert.equal(isAllowedMessengerDomain('https://messenger.com.attacker.org'), false);
 	assert.equal(isAllowedMessengerDomain('javascript:alert(1)'), false);
 	assert.equal(isAllowedMessengerDomain(undefined), false);
+});
+
+test('Permissions deny insecure origins, attachments and unrelated device access', () => {
+	for (const origin of ['http://www.messenger.com', 'file://messenger.com', 'https://messenger.com.evil.test', 'https://cdn.fbsbx.com', undefined]) {
+		assert.equal(isAllowedPermission(origin, 'media'), false);
+	}
+
+	for (const permission of ['media', 'notifications', 'fullscreen']) {
+		assert.equal(isAllowedPermission('https://www.messenger.com', permission), true);
+	}
+
+	for (const permission of ['usb', 'hid', 'serial', 'geolocation', 'openExternal', 'unknown']) {
+		assert.equal(isAllowedPermission('https://www.messenger.com', permission), false);
+	}
 });
 
 // 2. Test Call URL Routing logic
